@@ -1,12 +1,15 @@
 import React, { Component } from 'react';
 import './App.css';
+import Movies from './components/movies';
+import Pagination from './components/common/pagination';
 
 class root extends Component {
   render() {
     return (
       <div className="App">
         <main className="container">
-          <h1>Hello World</h1>
+          <Movies />
+          <Pagination />
         </main>
       </div>
     );
@@ -14,4 +17,3 @@ class root extends Component {
 }
 
 export default root;
-  
