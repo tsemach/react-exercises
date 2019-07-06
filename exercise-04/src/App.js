@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import './App.css';
 import Movies from './components/movies';
-import Pagination from './components/common/pagination';
+// import Pagination from './components/common/pagination';
 
 class root extends Component {
   render() {
@@ -9,7 +9,6 @@ class root extends Component {
       <div className="App">
         <main className="container">
           <Movies />
-          <Pagination />
         </main>
       </div>
     );

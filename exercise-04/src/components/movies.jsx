@@ -1,12 +1,31 @@
 import React, { Component } from 'react';
-import { getMovies, getMovie, saveMovie } from '../services/fakeMovieService'
-import Like from './common/like'
+
+import { getMovies } from '../services/fakeMovieService'
+import { getGenres } from '../services/fakeGenreService';
+import Pagination from './common/pagination';
+import { paginate } from '../utils/paginate'
+import ListGroup from './common/listGroup';
+import MovieTable from './movieTable';
+import _ from 'lodash';
 
 class Movies extends Component {
   constructor() {
     super();
-    this.state = {movies: getMovies()};
+    this.state = {
+      movies: [],
+      genres: [],
+      // movies: getMovies(),
+      // genres: getGenres(),
+      currentPage: 1,
+      pageSize: 4,
+      sortColumn: { path: 'title', order: 'asc'}
+    };
     this.handleDelete = this.handleDelete.bind(this);
+  }
+
+  componentDidMount() {
+    const genres = [{_id: '', name: 'All Genres'}, ...getGenres()]
+    this.setState({movies: getMovies(), genres})
   }
 
   handleDelete(_id) {
@@ -26,8 +45,35 @@ class Movies extends Component {
     this.setState({movies});
   }
 
+  handlePageChange = (page) => {
+    this.setState({currentPage: page})
+  }
+
+  handleGenreSelect = (genre) => {    
+    this.setState({selectedGenre: genre, currentPage: 1})
+  }
+ 
+  handleSort = sortColumn => {
+    this.setState({sortColumn});
+  }
+
+  getPagdeData = () => {
+      const { pageSize, currentPage, sortColumn, selectedGenre, movies: allMovies } = this.state;
+
+    const filteredMovies = selectedGenre && selectedGenre._id
+      ? allMovies.filter((m) => selectedGenre._id === m.genre._id) 
+      : allMovies;
+    
+    const sortedMovies = _.orderBy(filteredMovies, [sortColumn.path], [sortColumn.order]);
+
+    const movies = paginate(sortedMovies, currentPage, pageSize)
+
+    return {totalCount: filteredMovies.length, data: movies};
+  }
+
   renderTable() {
     const { length: count } = this.state.movies;
+    const { pageSize, currentPage, sortColumn, selectedGenre, movies: allMovies } = this.state;
 
     if (count === 0) return (
       <React.Fragment>        
@@ -35,33 +81,35 @@ class Movies extends Component {
       </React.Fragment>
     )    
     
+    const { totalCount, data: movies } = this.getPagdeData();
+
     return (
       <React.Fragment>        
-        <h3>There are {count} movies in the database</h3>
-        <table className="table">
-          <thead>
-            <tr >
-              <th scope="col">Lian</th>
-              <th scope="col">Genre</th>
-              <th scope="col">Stock</th>
-              <th scope="col">Rate</th>
-              <th scope="col">Like</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-          { this.state.movies.map(movie =>                       
-            <tr key={movie._id}>              
-              <td>{movie.title}</td>
-              <td>{movie.genre.name}</td>
-              <td>{movie.numberInStock}</td>
-              <td>{movie.dailyRentalRate}</td>
-              <td><Like onClick={() => this.handleLike(movie._id)} liked={movie.like}></Like></td>
-              <td><button type="button" className="btn btn-danger btn-sm" onClick={() => this.handleDelete(movie._id)}>Delete</button></td>
-            </tr>
-          )}
-          </tbody>
-        </table>
+        <h3>There are {totalCount} movies in the database</h3>
+        <div className="row">
+          <div className="col-3">
+            <ListGroup 
+              items={this.state.genres} 
+              selectedItem={this.state.selectedGenre}
+              onItemSelect={this.handleGenreSelect}
+            />
+          </div>
+          <div className="col">
+            <MovieTable 
+              movies={movies} 
+              sortColumn={sortColumn}
+              onLike={this.handleLike} 
+              onDelete={this.handleDelete}              
+              onSort={this.handleSort}
+            />
+            <Pagination 
+              itemsCount={totalCount} 
+              pageSize={pageSize} 
+              currentPage={currentPage}
+              onPageChange={this.handlePageChange}
+            />
+          </div>
+        </div>
       </React.Fragment>
     )
   }
@@ -72,5 +120,5 @@ class Movies extends Component {
     );
   }
 }
- 
+  
 export default Movies
